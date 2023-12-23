@@ -1,10 +1,6 @@
-import TomskeeDB
-import numpy as np
-
+import TomskeeDB as tdb
 
 if __name__ == '__main__':
-    cols = [x for x in 'ABCDEFG']
-    data = np.random.randint(1, 10, size=(10, len('ABCDEFG')))
-    test = TomskeeDB.Table(data, cols, axis=1)
-    test.print()
-    print(test.shape)
+    csv = 'D:\\Projects\\Python\\database\\test_data\\dota_hero_stats.csv'
+    table = tdb.TomskeeDB.read_csv(csv, dtypes=['str', 'str', 'int', 'int', 'str', 'str', 'str', 'list'])
+    table.get()

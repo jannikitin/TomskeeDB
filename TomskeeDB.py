@@ -1,83 +1,85 @@
+"""
+
+TomskeeDB is my pet project. It's open-source project of DBMS that supports SQL quering and
+simple interface to communicate with DBMS
+
+"""
+
 import numpy as np
-from collections.abc import Callable
-from typing import List, Dict, Any
+from typing import List, Final
+import csv
+import os
+from Exceptions import TDB_Exception, ValidationException
+from Table import Table
+import Schema
 
 
-class InputException(Exception):
+class TomskeeDB:
+    dtypes = {'int', 'float', 'str', 'object', 'list', 'numpy.array'}
+    COLUMN_TITLE_SIZE: Final = 128
 
-    def __init__(self, message='Columns and data in array must be the same size'):
-        super().__init__(message)
+    @classmethod
+    def read_csv(cls, PATH: str, dtypes=None):
+        if os.path.basename(PATH) not in os.listdir(os.path.dirname(PATH)):
+            raise ValidationException(f'{os.path.basename(PATH)} not found in directory')
+        with open(PATH) as csv_file:
+            csv_reader = csv.reader(csv_file)
+            columns = next(csv_reader)
+            raw_data = []
+            for line in csv_reader:
+                raw_data.append(line)
+            return Table(raw_data, columns, dtypes)
 
+    @classmethod
+    def to_csv(cls, FILE_NAME: str):
+        pass
 
-class Database:
-    pass
+    @classmethod
+    def validate_dtypes(cls, dtypes: List[str]) -> tuple:
+        for dtype in dtypes:
+            if dtype not in cls.dtypes:
+                return False, dtype
+        return True, 0
 
-
-class Schema:
-    pass
-
-
-class Table:
-
-
-    # can take list data, dict data and np.array
-    def __init__(self, data, columns: list = None, **kwargs):
-        self.data = {}
-        self.shape = tuple()
-
-        self.create_shape(data, columns)
-        self.shape = (len(self.raw_data_), len(self.columns_))
-        self.create_data()
-
-
-    def create_shape(self, data, columns):
+    @classmethod
+    def validate_data(cls, data, columns):
         if isinstance(data, dict):
-            self.columns_ = np.array([x for x in data.keys()])
-            self.raw_data_ = np.array([x for x in data.values()])
-            for i, col in enumerate(self.columns_):
-                self.data[col] = np.array(self.raw_data_[i])
-        elif isinstance(data, list):
+            primary_size = len(*(data.values()))
+            for key in data.keys():
+                if len(key) > TomskeeDB.COLUMN_TITLE_SIZE:
+                    TDB_Exception(f'Column title {key} is too big (max size: {TomskeeDB.COLUMN_TITLE_SIZE}')
+                elif len(data[key]) != primary_size:
+                    ValidationException('Columns must be same size')
+        elif isinstance(data, list) or type(data) is np.ndarray:
             if columns:
                 if len(columns) != len(data[0]):
-                    raise InputException
-                self.raw_data_ = np.array([x for x in data])
-                self.columns_ = np.array([x for x in columns])
-            else:
-                self.columns_ = np.array([col for col in range(0, len(data[0]))])
-                self.raw_data_ = np.array([x for x in data])
-
-        elif type(data) == np.ndarray:
-           if columns:
-                if len(columns) != len(data[0]):
-                    raise InputException
-                self.raw_data_ = data
-                self.columns_ = np.array(columns)
-           else:
-               self.raw_data_ = data
-               self.columns_ = np.array([x for x in range(len(data))])
+                    raise ValidationException('Length of column names must be the same as length of data')
+                for column in columns:
+                    if len(column) > TomskeeDB.COLUMN_TITLE_SIZE:
+                        TDB_Exception(f'Column title {column} is too big (max size: {TomskeeDB.COLUMN_TITLE_SIZE}')
         else:
-            raise InputException('Incorrect type')
+            raise ValidationException(f'TomskeeDB cannot convert {type(data)} into table')
 
-
-    def create_data(self):
-        if self.data is True:
-            return
-        for i, col in enumerate(self.columns_):
-            self.data[col] = [x[i] for x in self.raw_data_]
-
-    def get(self, cols, num_of_rows):
-        data = []
-        for i in range(num_of_rows):
-            for key in cols:
-                data.append(self.data[key][i])
-        print(*(col for col in cols))
-        for i in range(0, len(data), len(cols)):
-            step = len(cols)
-            print(*(x for x in data[i:i + step]))
-
-    def print(self):
-        print(self.data)
+    @classmethod
+    def set_dtype(cls, dtype):
+        match dtype:
+            case 'int':
+                return int
+            case 'float':
+                return float
+            case 'str':
+                return str
+            case 'list':
+                return list
+            case 'numpy.array':
+                return np.ndarray
+            case _:
+                return
 
     @staticmethod
-    def valid_input(cols, data):
-        return len(cols) == len(data[0])
+    def validate_init_table(data, columns, dtypes):
+        if dtypes:
+            dvalidation = TomskeeDB.validate_dtypes(dtypes)
+            if not dvalidation[0]:
+                raise ValidationException(f'{dvalidation[1]} is incorrect data type')
+        TomskeeDB.validate_data(data, columns)
