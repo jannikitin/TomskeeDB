@@ -3,6 +3,12 @@
 TomskeeDB is my pet project. It's open-source project of DBMS that supports SQL quering and
 simple interface to communicate with DBMS
 
+Naming rules:
+__'double underscore at the beginning' -- private __init__ methods which not allowed for user
+_'Single underscore at the beginning' -- private methods which do not reccomends to use
+_'Single undersoce at the end' -- private variabled which do not reccomends to use
+UPPER_CASE -- CONSTANTS
+snake_case -- standart class varibles, methods and functions
 """
 
 import numpy as np
@@ -12,6 +18,22 @@ import os
 from Exceptions import TDB_Exception, ValidationException
 from table import Table
 import Schema
+import msvcrt
+import time
+__version__ = '1.0.2'
+
+
+def run(table):
+    print(f'TOMSKEEDB {__version__}')
+    while True:
+        action = input('Print your SQL query here >> ')
+        if action == 'q':
+            print('Closing TomskeeDB')
+            time.sleep(1)
+            break
+        if action == 'SELECT':
+            table.select()
+
 
 
 class TomskeeDB:
@@ -19,7 +41,7 @@ class TomskeeDB:
     COLUMN_TITLE_SIZE_: Final = 128
 
     @classmethod
-    def read_csv(cls, PATH: str, dtypes=None):
+    def read_csv(cls, PATH: str, dtypes=None) -> Table:
         if os.path.basename(PATH) not in os.listdir(os.path.dirname(PATH)):
             raise ValidationException(f'{os.path.basename(PATH)} not found in directory')
         with open(PATH) as csv_file:
@@ -41,7 +63,7 @@ class TomskeeDB:
                 raise ValidationException(f'{dtype} is incorrect data type')
 
     @classmethod
-    def validate_data(cls, data, columns) -> None:
+    def __validate_data(cls, data, columns=None) -> None:
         if isinstance(data, dict):
             primary_size = len(next(iter(data.values())))
             for key in data.keys():
@@ -58,11 +80,17 @@ class TomskeeDB:
                 for column in columns:
                     if len(column) > cls.COLUMN_TITLE_SIZE_:
                         raise TDB_Exception(f'Column title {column} is too big (max size: {cls.COLUMN_TITLE_SIZE_}')
+            else:
+                primary_size = data[0]
+                for i in range(len(data)):
+                    if len(data[i]) != primary_size:
+                        raise ValidationException('Data must be the same size')
+
         else:
             raise ValidationException(f'TomskeeDB cannot convert {type(data)} into table')
 
     @classmethod
-    def set_dtype(cls, dtype):
+    def set_dtype(cls, data=None, dtype=None):
         match dtype:
             case 'int':
                 return int
@@ -79,6 +107,10 @@ class TomskeeDB:
 
     @staticmethod
     def validate_init_table(data, columns, dtypes):
-        TomskeeDB.validate_data(data, columns)
+        TomskeeDB.__validate_data(data, columns)
         if dtypes:
             TomskeeDB.validate_dtypes(columns, dtypes)
+
+    @classmethod
+    def validate_insert_data(cls, data, columns):
+        pass
