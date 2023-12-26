@@ -1,25 +1,18 @@
 """
-
 TomskeeDB is my pet project. It's open-source project of DBMS that supports SQL quering and
 simple interface to communicate with DBMS
 
-Naming rules:
-__'double underscore at the beginning' -- private __init__ methods which not allowed for user
-_'Single underscore at the beginning' -- private methods which do not reccomends to use
-_'Single undersoce at the end' -- private variabled which do not reccomends to use
-UPPER_CASE -- CONSTANTS
-snake_case -- standart class varibles, methods and functions
 """
-
-import numpy as np
-from typing import List, Final, Union
 import csv
 import os
-from Exceptions import TDB_Exception, ValidationException
-from table import Table
-import Schema
-import msvcrt
 import time
+from typing import List, Final, Union
+
+import numpy as np
+
+from exceptions import TDB_Exception, ValidationException
+from table import Table
+import schema
 __version__ = '1.0.2'
 
 
@@ -35,16 +28,36 @@ def run(table):
             table.select()
 
 
+def transform(data, columns):
+    if isinstance(data, dict):
+        columns_ = list(data.keys())
+        data_ = []
+        for i in range(len(next(iter(data.values())))):
+            row = []
+            for col in data.keys():
+                try:
+                    row.append(data[col][i])
+                except KeyError:
+                    raise ValidationException('Data must be the same size')
+            data_.append(row)
+        return data_, columns_
+    elif isinstance(data, list) or isinstance(data, np.ndarray):
+        if columns is None:
+            return data, None
+        return data, columns
+    else:
+        raise ValidationException(f'tsk cannot convert {type(data)} to Table')
+
 
 class TomskeeDB:
-    dtypes = {'int', 'float', 'str', 'numpy.array', int, float, str, np.ndarray}
-    COLUMN_TITLE_SIZE_: Final = 128
+    dtypes_ = {'int', 'float', 'str', 'numpy.array', int, float, str, np.ndarray}
+    COLUMN_TITLE_SIZE: Final = 128
 
     @classmethod
-    def read_csv(cls, PATH: str, dtypes=None) -> Table:
-        if os.path.basename(PATH) not in os.listdir(os.path.dirname(PATH)):
-            raise ValidationException(f'{os.path.basename(PATH)} not found in directory')
-        with open(PATH) as csv_file:
+    def read_csv(cls, path: str, dtypes=None) -> Table:
+        if os.path.basename(path) not in os.listdir(os.path.dirname(path)):
+            raise ValidationException(f'{os.path.basename(path)} not found in directory')
+        with open(path) as csv_file:
             csv_reader = csv.reader(csv_file)
             columns = next(csv_reader)
             data = []
@@ -57,37 +70,17 @@ class TomskeeDB:
         pass
 
     @classmethod
-    def validate_dtypes(cls, columns, dtypes: List[str]) -> None:
+    def _validate_dtypes(cls, columns, dtypes: List[str]) -> None:
         for dtype in dtypes:
-            if dtype not in cls.dtypes:
-                raise ValidationException(f'{dtype} is incorrect data type')
+            if dtype not in cls.dtypes_:
+                raise ValidationException(f'{dtype} is unsupported data type')
 
     @classmethod
-    def __validate_data(cls, data, columns=None) -> None:
-        if isinstance(data, dict):
-            primary_size = len(next(iter(data.values())))
-            for key in data.keys():
-                if len(key) > cls.COLUMN_TITLE_SIZE_:
-                    raise TDB_Exception(f'Column title {key} is too big (max size: {cls.COLUMN_TITLE_SIZE_}')
-                if len(data[key]) != primary_size:
-                    raise ValidationException('Columns must be same size')
-
-        elif isinstance(data, list) or type(data) is np.ndarray:
-            if columns is not None:
-                for i in range(len(data)):
-                    if len(columns) != len(data[i]):
-                        raise ValidationException('Length of column names must be the same as length of data')
-                for column in columns:
-                    if len(column) > cls.COLUMN_TITLE_SIZE_:
-                        raise TDB_Exception(f'Column title {column} is too big (max size: {cls.COLUMN_TITLE_SIZE_}')
-            else:
-                primary_size = data[0]
-                for i in range(len(data)):
-                    if len(data[i]) != primary_size:
-                        raise ValidationException('Data must be the same size')
-
-        else:
-            raise ValidationException(f'TomskeeDB cannot convert {type(data)} into table')
+    def _data_validation(cls, data, columns=None) -> None:
+        if columns:
+            for column in columns:
+                if len(column) > cls.COLUMN_TITLE_SIZE:
+                    raise TDB_Exception(f'Column title {column} is too big (max size: {cls.COLUMN_TITLE_SIZE}')
 
     @classmethod
     def set_dtype(cls, data=None, dtype=None):
@@ -105,12 +98,9 @@ class TomskeeDB:
             case _:
                 return
 
-    @staticmethod
-    def validate_init_table(data, columns, dtypes):
-        TomskeeDB.__validate_data(data, columns)
-        if dtypes:
-            TomskeeDB.validate_dtypes(columns, dtypes)
-
     @classmethod
-    def validate_insert_data(cls, data, columns):
-        pass
+    def validate_init_table(cls, data, columns, dtypes):
+        cls._data_validation(data, columns)
+        if dtypes:
+            cls._validate_dtypes(columns, dtypes)
+
