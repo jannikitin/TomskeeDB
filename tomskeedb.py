@@ -13,10 +13,10 @@ import numpy as np
 from exceptions import TDB_Exception, ValidationException
 from table import Table
 import schema
-__version__ = '1.0.2'
+__version__ = '1.1.0'
 
 
-def run(table):
+def run():
     print(f'TOMSKEEDB {__version__}')
     while True:
         action = input('Print your SQL query here >> ')
@@ -24,11 +24,9 @@ def run(table):
             print('Closing TomskeeDB')
             time.sleep(1)
             break
-        if action == 'SELECT':
-            table.select()
 
 
-def transform(data, columns):
+def transform(data, columns=None):
     if isinstance(data, dict):
         columns_ = list(data.keys())
         data_ = []
@@ -70,13 +68,13 @@ class TomskeeDB:
         pass
 
     @classmethod
-    def _validate_dtypes(cls, columns, dtypes: List[str]) -> None:
+    def validate_dtypes(cls, dtypes: List[str]) -> None:
         for dtype in dtypes:
             if dtype not in cls.dtypes_:
                 raise ValidationException(f'{dtype} is unsupported data type')
 
     @classmethod
-    def _data_validation(cls, data, columns=None) -> None:
+    def columns_validation(cls, data, columns=None) -> None:
         if columns:
             for column in columns:
                 if len(column) > cls.COLUMN_TITLE_SIZE:
@@ -100,7 +98,7 @@ class TomskeeDB:
 
     @classmethod
     def validate_init_table(cls, data, columns, dtypes):
-        cls._data_validation(data, columns)
+        cls.columns_validation(data, columns)
         if dtypes:
-            cls._validate_dtypes(columns, dtypes)
+            cls.validate_dtypes(dtypes)
 
