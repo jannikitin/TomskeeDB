@@ -12,18 +12,59 @@ import numpy as np
 
 from exceptions import TDB_Exception, ValidationException
 from table import Table
-import schema
+from schema import Schema
+from parser import Parser,  Query
 __version__ = '1.1.0'
 
 
-def run():
+def display():
     print(f'TOMSKEEDB {__version__}')
+    print('Type \\h for help window.')
     while True:
-        action = input('Print your SQL query here >> ')
-        if action == 'q':
-            print('Closing TomskeeDB')
-            time.sleep(1)
-            break
+        action = input('>>')
+        match action:
+            case 'q':
+                print('Closing TomskeeDB')
+                time.sleep(1)
+                break
+            case r'\h':
+                tsk_helper()
+            case r'\sql':
+                sql_helper()
+            case r'\run':
+                SQL_QUERY()
+            case 'cls':
+                os.system('cls')
+            case _:
+                print(f'{action} command is unknown')
+
+
+def tsk_helper():
+    with open('help.txt', 'r') as f:
+        print(f.read())
+
+
+def sql_helper():
+    with open('sql.txt', 'r') as f:
+        print(f.read())
+
+
+def SQL_QUERY():
+    current_schema = None
+    print('You can type "SELECT tsk.database_navigator" to learn, how to check your schemas and tables')
+    while True:
+        query = input('Type your SQL query here >>')
+        match query:
+            case 'q':
+                print('Exiting SQL console...')
+                time.sleep(1)
+                break
+            case 'cls':
+                os.system('cls')
+            case _:
+                query = Query(query)
+
+
 
 
 def transform(data, columns=None):
@@ -48,7 +89,7 @@ def transform(data, columns=None):
 
 
 class TomskeeDB:
-    dtypes_ = {'int', 'float', 'str', 'numpy.array', int, float, str, np.ndarray}
+    dtypes_ = {'int', 'float', 'str', 'numpy.ndarray', int, float, str, np.ndarray}
     COLUMN_TITLE_SIZE: Final = 128
 
     @classmethod
@@ -61,7 +102,7 @@ class TomskeeDB:
             data = []
             for line in csv_reader:
                 data.append(line)
-            return Table(data, columns, dtypes)
+            return Table(data, columns, dtypes, name=os.path.basename(path).split('.')[0])
 
     @classmethod
     def to_csv(cls, FILE_NAME: str):
@@ -91,7 +132,7 @@ class TomskeeDB:
                 return str
             case 'list':
                 return list
-            case 'numpy.array':
+            case 'numpy.ndarray':
                 return np.ndarray
             case _:
                 return
@@ -101,4 +142,3 @@ class TomskeeDB:
         cls.columns_validation(data, columns)
         if dtypes:
             cls.validate_dtypes(dtypes)
-

@@ -15,7 +15,8 @@ class Table:
 
     def __init__(self, data: Union[Dict[Any, Any], List[Any], np.ndarray] = None,
                  columns: List[str] = None,
-                 dtypes: List[str] = None):
+                 dtypes: List[str] = None,
+                 name: str = 'Unnamed'):
         if data is None:
             return
         (data_, columns_) = tsk.transform(data, columns)
@@ -24,6 +25,7 @@ class Table:
         self.shape = (len(data_), len(self.columns))
         self.dtypes = self._create_dtypes(dtypes) if dtypes else self._define_dtypes(data_)
         self._data = self._create_data(data_)
+        self.name = name
 
     @staticmethod
     def _create_columns(n):
@@ -197,4 +199,4 @@ class Table:
         return tuple(rng)
 
     def __str__(self):
-        return f'{self.shape},\n{self.columns}'
+        return f'{self.name} table of {self.__class__}'

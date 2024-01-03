@@ -1,0 +1,10 @@
+<TomskeeDB help>
+
+Commands:
+'\h' -- help command to display help information about TomskeeDB
+'\sql' -- help command to display all available SQL functions, keywords and queries
+
+You can use these CLI commands:
+-cls
+
+Type "\run" to open SQL console
