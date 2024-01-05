@@ -8,7 +8,7 @@ import numpy as np
 from tabulate import tabulate
 
 import tomskeedb as tsk
-from exceptions import TDB_Exception, ValidationException
+from exceptions import TskException, ValidationException
 
 
 class Table:
@@ -106,7 +106,7 @@ class Table:
                offset: int = None):
         index_range = self.index_ranger(limit, offset)
 
-        if columns == '*':
+        if columns == ['*']:
             columns = self.columns
         else:
             for col in columns:
@@ -172,7 +172,7 @@ class Table:
              index: Union[int, range] = None,
              axis: int = 0):
         if not index and not columns:
-            raise TDB_Exception('Column and index are empty')
+            raise TskException('Column and index are empty')
         if axis == 0:
             index_ranger = [index, index] if isinstance(index, int) else [index[0], index[1]]
             self._axis_0_dropper(index_ranger)

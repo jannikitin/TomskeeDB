@@ -1,7 +1,7 @@
 import tomskeedb as tsk
 import numpy as np
 import csv
-import sqlparse
+from parser import Query
 
 
 def prewiev():
@@ -28,10 +28,8 @@ def csv_prewiev():
 
 if __name__ == '__main__':
     test_schema = tsk.Schema()
-    # table = prewiev()
-    # test_schema.create_table(table)
-    # tsk.display()
-    sql = 'SELECT user_id, columns_id FROM test_table LIMIT 5'
-    parse_sql = tsk.Query(sql)
-    print(parse_sql)
-
+    table = csv_prewiev()
+    test_schema.create_table(table, name='table1')
+    tsk.display()
+    # sql = Query('SELECT * FROM table1 LIMIT 10 OFFSET 4')
+    # test_schema.execute(sql)

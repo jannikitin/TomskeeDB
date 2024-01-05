@@ -9,8 +9,9 @@ import time
 from typing import List, Final, Union
 
 import numpy as np
+import sqlparse
 
-from exceptions import TDB_Exception, ValidationException
+from exceptions import TskException, ValidationException
 from table import Table
 from schema import Schema
 from parser import Parser,  Query
@@ -50,7 +51,11 @@ def sql_helper():
 
 
 def SQL_QUERY():
-    current_schema = None
+    current_schema = Schema()
+    csv = r'D:\Projects\Python\database\test_data\dota_hero_stats.csv'
+    table = TomskeeDB.read_csv(csv)
+    current_schema.create_table(table, name='table1')
+
     print('You can type "SELECT tsk.database_navigator" to learn, how to check your schemas and tables')
     while True:
         query = input('Type your SQL query here >>')
@@ -62,10 +67,14 @@ def SQL_QUERY():
             case 'cls':
                 os.system('cls')
             case _:
-                query = Query(query)
-
-
-
+                try:
+                    query = Query(query)
+                except TskException as e:
+                    print('Incorrect operation')
+                try:
+                    current_schema.execute(query)
+                except TskException:
+                    print('R U idiot?')
 
 def transform(data, columns=None):
     if isinstance(data, dict):
@@ -119,7 +128,7 @@ class TomskeeDB:
         if columns:
             for column in columns:
                 if len(column) > cls.COLUMN_TITLE_SIZE:
-                    raise TDB_Exception(f'Column title {column} is too big (max size: {cls.COLUMN_TITLE_SIZE}')
+                    raise TskException(f'Column title {column} is too big (max size: {cls.COLUMN_TITLE_SIZE}')
 
     @classmethod
     def set_dtype(cls, data=None, dtype=None):

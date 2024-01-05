@@ -1,4 +1,4 @@
-class TDB_Exception(Exception):
+class TskException(Exception):
 
     def __init__(self, msg='Error'):
         super().__init__(msg)
