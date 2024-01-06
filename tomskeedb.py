@@ -11,11 +11,14 @@ from typing import List, Final, Union
 import numpy as np
 import sqlparse
 
-from exceptions import TskException, ValidationException
+from exceptions import TableConsistencyExeption, ValidationException
 from table import Table
 from schema import Schema
-from parser import Parser,  Query
-__version__ = '1.1.0'
+from parser import Parser, Query
+
+__version__ = '1.1.2'
+HELPER_TXT = 'data/help.txt'
+SQL_TXT = 'data/sql.txt'
 
 
 def display():
@@ -41,18 +44,18 @@ def display():
 
 
 def tsk_helper():
-    with open('help.txt', 'r') as f:
+    with open('data/help.txt', 'r') as f:
         print(f.read())
 
 
 def sql_helper():
-    with open('sql.txt', 'r') as f:
+    with open('data/sql.txt', 'r') as f:
         print(f.read())
 
 
 def SQL_QUERY():
     current_schema = Schema()
-    csv = r'D:\Projects\Python\database\test_data\dota_hero_stats.csv'
+    csv = r'D:\Projects\Python\database\test_csv\dota_hero_stats.csv'
     table = TomskeeDB.read_csv(csv)
     current_schema.create_table(table, name='table1')
 
@@ -69,14 +72,17 @@ def SQL_QUERY():
             case _:
                 try:
                     query = Query(query)
-                except TskException as e:
+                except TableConsistencyExeption as e:
                     print('Incorrect operation')
                 try:
                     current_schema.execute(query)
-                except TskException:
+                except TableConsistencyExeption:
                     print('R U idiot?')
 
-def transform(data, columns=None):
+
+def transform(data, columns=None) -> tuple:
+    if not data and not columns:
+        return [[]], []
     if isinstance(data, dict):
         columns_ = list(data.keys())
         data_ = []
@@ -113,9 +119,6 @@ class TomskeeDB:
                 data.append(line)
             return Table(data, columns, dtypes, name=os.path.basename(path).split('.')[0])
 
-    @classmethod
-    def to_csv(cls, FILE_NAME: str):
-        pass
 
     @classmethod
     def validate_dtypes(cls, dtypes: List[str]) -> None:
@@ -124,11 +127,11 @@ class TomskeeDB:
                 raise ValidationException(f'{dtype} is unsupported data type')
 
     @classmethod
-    def columns_validation(cls, data, columns=None) -> None:
+    def columns_validation(cls, columns=None) -> None:
         if columns:
             for column in columns:
                 if len(column) > cls.COLUMN_TITLE_SIZE:
-                    raise TskException(f'Column title {column} is too big (max size: {cls.COLUMN_TITLE_SIZE}')
+                    raise TableConsistencyExeption(f'Column title {column} is too big (max size: {cls.COLUMN_TITLE_SIZE}')
 
     @classmethod
     def set_dtype(cls, data=None, dtype=None):
@@ -147,7 +150,8 @@ class TomskeeDB:
                 return
 
     @classmethod
-    def validate_init_table(cls, data, columns, dtypes):
-        cls.columns_validation(data, columns)
+    def validate_init_table(cls, columns, dtypes):
+        if columns:
+            cls.columns_validation(columns)
         if dtypes:
             cls.validate_dtypes(dtypes)

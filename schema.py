@@ -4,7 +4,8 @@ Provide instruments for linking different tables of TomskeeDB.
 """
 
 from table import Table
-from exceptions import TskException
+from exceptions import TableConsistencyExeption
+
 
 class Schema:
 
@@ -19,7 +20,7 @@ class Schema:
         try:
             table = self.schema[query['from'].name]
         except KeyError:
-            raise TskException
+            raise TableConsistencyExeption
         columns = query['select']._parameters
         limit = query.get_value('limit')
         offset = query.get_value('offset')
@@ -27,5 +28,3 @@ class Schema:
 
     def __getitem__(self, key):
         return self.schema[key]
-
-

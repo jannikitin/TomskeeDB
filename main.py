@@ -2,6 +2,8 @@ import tomskeedb as tsk
 import numpy as np
 import csv
 from parser import Query
+from table import Table
+import pandas as pd
 
 
 def prewiev():
@@ -21,15 +23,14 @@ def prewiev():
 
 
 def csv_prewiev():
-    csv = r'D:\Projects\Python\database\test_data\dota_hero_stats.csv'
+    csv = r'D:\Projects\Python\database\test_csv\dota_hero_stats.csv'
     table = tsk.TomskeeDB.read_csv(csv)
     return table
 
 
 if __name__ == '__main__':
-    test_schema = tsk.Schema()
-    table = csv_prewiev()
-    test_schema.create_table(table, name='table1')
-    tsk.display()
-    # sql = Query('SELECT * FROM table1 LIMIT 10 OFFSET 4')
-    # test_schema.execute(sql)
+    table = Table()
+    print(table.shape, table.dtypes, table.columns, table._data)
+    table.insert({'a': [1,2,3]}, axis=1)
+    print(table.shape, table.dtypes, table.columns, table._data)
+    table.select()
